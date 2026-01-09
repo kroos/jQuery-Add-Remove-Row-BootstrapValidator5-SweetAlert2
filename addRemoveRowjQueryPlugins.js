@@ -1,4 +1,17 @@
 (function ($) {
+	const defaultSwalOptions = {
+		title: 'Delete This Item?',
+		text: 'This action cannot be undone.',
+		icon: 'warning',
+		showCancelButton: true,
+		showLoaderOnConfirm: true,
+		allowOutsideClick: false,
+		confirmButtonColor: '#3085d6',
+		cancelButtonColor: '#d33',
+		confirmButtonText: 'Yes',
+		cancelButtonText: 'Cancel',
+	};
+
 	$.fn.remAddRow = function (options) {
 		const settings = $.extend({
 			// Original options
@@ -67,6 +80,13 @@
 
 		}, options);
 
+		// 🔹 Merge SweetAlert2 defaults with user options
+		settings.swal.options = $.extend(
+			true,
+			{},
+			defaultSwalOptions,
+			settings.swal.options || {}
+		);
 		const $wrapper = this;
 		const $addBtn = $(settings.addBtn);
 
@@ -192,7 +212,7 @@
 		// Handle AJAX deletion with SweetAlert2
 		function handleAjaxDelete(id, index, $row, event) {
 			const SwalInstance = window.Swal || window.swal;
-			if (!settings.swal.enabled || !window.swal || !settings.swal.ajax.url) {
+			if (!settings.swal.enabled || !SwalInstance || !settings.swal.ajax.url) {
 				// If no SweetAlert2 or no URL, just remove the row
 				// $row.remove();
 				removeRowAndReindex($row);
@@ -290,11 +310,9 @@
 
 		// REMOVE handler
 		$wrapper.on('click', settings.removeSelector, function (e) {
-			e.preventDefault();
 			const clicked = $(this);
 			const index = clicked.data('index');
 
-			// Find the row to remove
 			let $target = clicked.closest(`[id$="_${index}"]`);
 			if (!$target.length) {
 				$target = clicked.parents().filter(function () {
@@ -304,34 +322,27 @@
 			if (!$target.length) $target = clicked.closest('.row-box');
 
 			if ($target.length) {
-				// Call user's onRemove callback FIRST
+
+						// 🔹 Let user hook decide
 				settings.onRemove?.(index, e, $target, settings.fieldName);
 
-				// If user didn't prevent default, proceed with plugin's removal logic
-				if (!e.isDefaultPrevented()) {
-					// Get ID field value
-					const idValue = getIdFieldValue($target, index);
-
-					// Remove validators if enabled
-					if (settings.validator.enabled) {
-						removeValidators(index, $target);
-					}
-
-					// If ID exists and SweetAlert2 is enabled, handle AJAX delete
-					if (idValue && settings.swal.enabled) {
-						handleAjaxDelete(idValue, index, $target, e);
-					} else {
-						// No ID or SweetAlert2 disabled - remove immediately
-						removeRowAndReindex($target);
-					}
-
-					// Reindex if needed
-					// if (settings.reindexOnRemove && !$target.closest('body').length) {
-					// 	reindexRows();
-					// }
+						// 🔹 User explicitly stopped execution
+				if (e.isDefaultPrevented()) {
+					return;
 				}
 
-				// updateAddBtnState();
+						// 🔹 Plugin logic continues
+				const idValue = getIdFieldValue($target, index);
+
+				if (settings.validator.enabled) {
+					removeValidators(index, $target);
+				}
+
+				if (idValue && settings.swal.enabled) {
+					handleAjaxDelete(idValue, index, $target, e);
+				} else {
+					removeRowAndReindex($target);
+				}
 			} else {
 				console.warn('remAddRow: could not locate row to remove for index=', index);
 			}
