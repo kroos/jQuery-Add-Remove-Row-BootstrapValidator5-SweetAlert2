@@ -109,8 +109,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.17/dist/sweetalert2.all.min.js"></script>
 <script src="bootstrapValidator5.js" ></script>
-<script src="addRemoveRowBootstrapValidatorSweetAlert2AjaxjQueryPlugin.js" ></script>
-<!-- <script src="addRemoveRowjQueryPlugins.js" ></script> -->
+<script src="addRemoveRowBootstrapValidator6SweetAlert2Ajax.js" ></script>
 <script type="text/javascript">
 	jQuery.noConflict ();
 	(function($){
@@ -118,7 +117,7 @@
 
 ///////////////////////////////////////////
 /*
-			$('#serial_wrap').remAddRow({
+			$('#serial_wrap').addRemRow({
 				addBtn: '#serial_add',
 				maxRows: 5,
 				fieldName: 'per',
@@ -182,7 +181,7 @@
 
 ///////////////////////////////////////////
 /*
-			$('#serial_wrap').remAddRow({
+			$('#serial_wrap').addRemRow({
 				addBtn: '#serial_add',
 				maxRows: 5,
 				fieldName: 'per',
@@ -235,7 +234,7 @@
 */
 ///////////////////////////////////////////
 /*
-			$('#serial_wrap').remAddRow({
+			$('#serial_wrap').addRemRow({
 				addBtn: '#serial_add',
 				rowSelector: 'test',
 				removeClass: 'remove',
@@ -257,7 +256,7 @@
 
 ///////////////////////////////////////////
 
-			$('#serial_wrap').remAddRow({
+			$('#serial_wrap').addRemRow({
 				addBtn: '#serial_add',
 				maxRows: 5,
 				fieldName: `inv`,
@@ -360,7 +359,7 @@
 				onAdd: (index, event, $row, name) => {
 					console.log(`Added row ${index} with field name: ${name}`);
 
-					$(`#serial_wrap_${index}`).remAddRow({
+					$(`#serial_wrap_${index}`).addRemRow({
 						addBtn: `#serial2_add_${index}`,
 						startRow: 10,
 						maxRows: 5,

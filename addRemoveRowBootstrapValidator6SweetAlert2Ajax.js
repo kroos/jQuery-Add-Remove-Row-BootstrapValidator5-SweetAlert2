@@ -1,12 +1,12 @@
 (function ($) {
 	'use strict';
 
-	const old = $.fn.remAddRow;
+	const old = $.fn.addRemRow;
 
-	$.fn.remAddRow = function (options) {
+	$.fn.addRemRow = function (options) {
 
 		if (!this.length) {
-			console.warn('[remAddRow] No elements found');
+			console.warn('[addRemRow] No elements found');
 			return this;
 		}
 
@@ -105,7 +105,7 @@
 			const $form = $(form);
 
 			if (!$form.length || typeof $form.bootstrapValidator !== 'function') {
-				console.error('[remAddRow][validator] bootstrapValidator not found');
+				console.error('[addRemRow][validator] bootstrapValidator not found');
 				return;
 			}
 
@@ -150,13 +150,13 @@
 
 			if (settings.addBtn) {
 				$(settings.addBtn)
-					.off('click.remAddRow')
-					.on('click.remAddRow', addRow);
+					.off('click.addRemRow')
+					.on('click.addRemRow', addRow);
 			}
 
 			$wrapper
-				.off('click.remAddRow', `.${settings.removeClass}`)
-				.on('click.remAddRow', `.${settings.removeClass}`, removeRow);
+				.off('click.addRemRow', `.${settings.removeClass}`)
+				.on('click.addRemRow', `.${settings.removeClass}`, removeRow);
 
 			return methods;
 		}
@@ -273,7 +273,7 @@
 
 				if ($dbIdInput.length === 0) {
 					console.error(
-						`[remAddRow][swal] Cannot find dbId input: ${settings.fieldName}[${index}][${settings.swal.ajax.dbPrimaryKeyId}]`,
+						`[addRemRow][swal] Cannot find dbId input: ${settings.fieldName}[${index}][${settings.swal.ajax.dbPrimaryKeyId}]`,
 						$row
 					);
 					return false;
@@ -530,7 +530,7 @@
 			remove(index) {
 				$wrapper
 					.find(`#${settings.rowSelector}_${index} .${settings.removeClass}`)
-					.trigger('click.remAddRow');
+					.trigger('click.addRemRow');
 				return this;
 			},
 			getCount() {
@@ -547,19 +547,318 @@
 			},
 			destroy() {
 				if (settings.addBtn) {
-					$(settings.addBtn).off('click.remAddRow');
+					$(settings.addBtn).off('click.addRemRow');
 				}
-				$wrapper.off('click.remAddRow', `.${settings.removeClass}`);
+				$wrapper.off('click.addRemRow', `.${settings.removeClass}`);
 				this.reset();
 				return this;
 			}
+
+/* ========================
+ * PUBLIC API (EXTENDED)
+ * ====================== */
+
+			const methods = {
+	// Existing methods...
+				add() {
+					addRow(new Event('click'));
+					return this;
+				},
+				remove(index) {
+					$wrapper
+					.find(`#${settings.rowSelector}_${index} .${settings.removeClass}`)
+					.trigger('click.addRemRow');
+					return this;
+				},
+				getCount() {
+					return i;
+				},
+				reset() {
+					$wrapper.find(`.${settings.rowSelector}`).remove();
+					i = 0;
+					return this;
+				},
+				reindexAll() {
+					reindexRowAll();
+					return this;
+				},
+				destroy() {
+					if (settings.addBtn) {
+						$(settings.addBtn).off('click.addRemRow');
+					}
+					$wrapper.off('click.addRemRow', `.${settings.removeClass}`);
+					this.reset();
+					return this;
+				},
+
+	// NEW METHODS ADDED BELOW
+
+	/**
+	 * Get jQuery object of a specific row
+	 * @param {number} index - Row index
+	 * @returns {jQuery} Row element
+	 */
+				getRow(index) {
+					return $(`#${settings.rowSelector}_${index}`, $wrapper);
+				},
+
+	/**
+	 * Get all rows as jQuery collection
+	 * @returns {jQuery} All row elements
+	 */
+				getAllRows() {
+					return $wrapper.find(`.${settings.rowSelector}`);
+				},
+
+	/**
+	 * Get form data from a specific row
+	 * @param {number} index - Row index
+	 * @returns {Object} Serialized row data
+	 */
+				getRowData(index) {
+					const $row = this.getRow(index);
+					const data = {};
+
+					$row.find(':input').each(function() {
+						const $input = $(this);
+						const name = $input.attr('name');
+						if (name) {
+				// Extract nested structure from name like data[0][name]
+							const matches = name.match(/(\w+)\[(\d+)\]\[(\w+)\]/);
+							if (matches && matches[2] == index) {
+								data[matches[3]] = $input.val();
+							}
+						}
+					});
+
+					return data;
+				},
+
+	/**
+	 * Get form data from all rows
+	 * @returns {Array} Array of row data objects
+	 */
+				getAllData() {
+					const data = [];
+					this.getAllRows().each((idx, row) => {
+						const $row = $(row);
+						const rowIndex = $row.attr('id').split('_').pop();
+						data.push(this.getRowData(rowIndex));
+					});
+					return data;
+				},
+
+	/**
+	 * Set data for a specific row
+	 * @param {number} index - Row index
+	 * @param {Object} data - Data to populate
+	 * @returns {Object} Plugin instance for chaining
+	 */
+				setRowData(index, data) {
+					const $row = this.getRow(index);
+
+					Object.keys(data).forEach(key => {
+						const $input = $row.find(`[name*="[${key}]"]`);
+						if ($input.length) {
+							$input.val(data[key]);
+						}
+					});
+
+					return this;
+				},
+
+	/**
+	 * Set data for all rows (adds rows if needed)
+	 * @param {Array} dataArray - Array of row data objects
+	 * @returns {Object} Plugin instance for chaining
+	 */
+				setAllData(dataArray) {
+		// Remove existing rows
+					this.reset();
+
+		// Add rows and populate data
+					dataArray.forEach((rowData, idx) => {
+						if (idx < settings.maxRows) {
+							this.add();
+							this.setRowData(settings.startRow + idx, rowData);
+						}
+					});
+
+					return this;
+				},
+
+	/**
+	 * Check if maximum rows limit has been reached
+	 * @returns {boolean} True if max rows reached
+	 */
+				isMaxRowsReached() {
+					return i >= (settings.startRow + settings.maxRows);
+				},
+
+	/**
+	 * Disable add button
+	 * @returns {Object} Plugin instance for chaining
+	 */
+				disableAdd() {
+					if (settings.addBtn) {
+						$(settings.addBtn).prop('disabled', true).addClass('disabled');
+					}
+					return this;
+				},
+
+	/**
+	 * Enable add button
+	 * @returns {Object} Plugin instance for chaining
+	 */
+				enableAdd() {
+					if (settings.addBtn) {
+						$(settings.addBtn).prop('disabled', false).removeClass('disabled');
+					}
+					return this;
+				},
+
+	/**
+	 * Disable remove buttons for all rows
+	 * @returns {Object} Plugin instance for chaining
+	 */
+				disableRemove() {
+					$wrapper.find(`.${settings.removeClass}`).prop('disabled', true).addClass('disabled');
+					return this;
+				},
+
+	/**
+	 * Enable remove buttons for all rows
+	 * @returns {Object} Plugin instance for chaining
+	 */
+				enableRemove() {
+					$wrapper.find(`.${settings.removeClass}`).prop('disabled', false).removeClass('disabled');
+					return this;
+				},
+
+	/**
+	 * Update plugin settings dynamically
+	 * @param {Object} newOptions - New options to merge
+	 * @returns {Object} Plugin instance for chaining
+	 */
+				updateOptions(newOptions) {
+					Object.assign(settings, newOptions);
+
+		// Reinitialize with updated settings
+					if (newOptions.addBtn) {
+						$(settings.addBtn).off('click.addRemRow').on('click.addRemRow', addRow);
+					}
+
+					return this;
+				},
+
+	/**
+	 * Trigger validation for a specific row
+	 * @param {number} index - Row index
+	 * @returns {boolean} Validation result
+	 */
+				validateRow(index) {
+					if (!settings.validator) return true;
+
+					const { form } = settings.validator;
+					const $form = $(form);
+
+					if ($form.length && typeof $form.bootstrapValidator === 'function') {
+						return $form.bootstrapValidator('validateField',
+					`${settings.fieldName}[${index}][*]`);
+					}
+
+					return true;
+				},
+
+	/**
+	 * Trigger validation for all rows
+	 * @returns {boolean} Overall validation result
+	 */
+				validateAll() {
+					if (!settings.validator) return true;
+
+					const { form } = settings.validator;
+					const $form = $(form);
+
+					if ($form.length && typeof $form.bootstrapValidator === 'function') {
+						return $form.bootstrapValidator('validate');
+					}
+
+					return true;
+				},
+
+	/**
+	 * Get current configuration
+	 * @returns {Object} Current settings (read-only copy)
+	 */
+				getConfig() {
+					return Object.assign({}, settings);
+				},
+
+	/**
+	 * Show/hide rows based on filter function
+	 * @param {Function} filterFn - Function that receives row data and returns boolean
+	 * @returns {Object} Plugin instance for chaining
+	 */
+				filterRows(filterFn) {
+					this.getAllRows().each((idx, row) => {
+						const $row = $(row);
+						const rowIndex = $row.attr('id').split('_').pop();
+						const rowData = this.getRowData(rowIndex);
+
+						if (filterFn(rowData, rowIndex, $row)) {
+							$row.show();
+						} else {
+							$row.hide();
+						}
+					});
+
+					return this;
+				},
+
+	/**
+	 * Sort rows based on comparator function
+	 * @param {Function} compareFn - Comparator function
+	 * @returns {Object} Plugin instance for chaining
+	 */
+				sortRows(compareFn) {
+					const rows = [];
+					const rowData = [];
+
+		// Collect rows and data
+					this.getAllRows().each((idx, row) => {
+						const $row = $(row);
+						const rowIndex = $row.attr('id').split('_').pop();
+						rows.push({
+							element: $row,
+							index: rowIndex,
+							data: this.getRowData(rowIndex)
+						});
+					});
+
+		// Sort based on data
+					rows.sort((a, b) => compareFn(a.data, b.data));
+
+		// Reorder in DOM
+					rows.forEach((row, newIndex) => {
+						$wrapper.append(row.element);
+					});
+
+		// Reindex
+					this.reindexAll();
+
+					return this;
+				}
+			};
+
+
 		};
 
 		return init();
 	};
 
-	$.fn.remAddRow.noConflict = function () {
-		$.fn.remAddRow = old;
+	$.fn.addRemRow.noConflict = function () {
+		$.fn.addRemRow = old;
 		return this;
 	};
 

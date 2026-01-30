@@ -1,306 +1,554 @@
-# remAddRow v1
+# jQuery addRemRow Plugin
 
-Stable Version: **v1 (Jan 2026)**
+A powerful, feature-rich jQuery plugin for dynamically adding and removing form rows with support for validation, SweetAlert2 confirmations, nested fields, and comprehensive reindexing.
 
-`remAddRow` is a lightweight, dependency-minimal jQuery plugin designed to safely **add, remove, and reindex dynamic form rows**.  
-It is callback-driven, predictable, and works with both synchronous and asynchronous workflows.
+## Features
 
-This documentation focuses first on **core functionality only** (no validator, no SweetAlert2), then introduces optional features later.
+- ✅ Dynamic row addition/removal with configurable limits
+- ✅ BootstrapValidator integration
+- ✅ SweetAlert2 confirmation with AJAX delete support
+- ✅ Nested field support
+- ✅ Automatic reindexing of names, IDs, and data attributes
+- ✅ Comprehensive public API for programmatic control
+- ✅ Event callbacks for customization
+- ✅ Row templating
+- ✅ Data management methods
+- ✅ Filtering and sorting capabilities
 
----
+## Installation
 
-## 1. Core Concept
+### Dependencies
 
-The plugin manages a **collection of rows** inside a wrapper element.  
-Each row:
+Required:
+- **jQuery** (1.7+)
+- **Bootstrap 4/5** (for styling, optional for functionality)
+- **BootstrapValidator** (for validation, optional)
 
-- Has a predictable **ID pattern**
-- Contains indexed input names
-- Can be safely removed and **automatically reindexed**
+Optional:
+- **SweetAlert2** (for delete confirmations)
+- **Font Awesome** (for icons)
 
-The plugin guarantees:
-
-- No duplicated indexes
-- Consistent DOM structure
-- Safe removal even with async logic
-
----
-
-## 2. Minimal Usage
-
-### HTML
-```html
-<div id="items_wrap"></div>
-
-<button type="button" id="add_item">Add Item</button>
-```
-
-### JavaScript
-```js
-$('#items_wrap').remAddRow({
-  addBtn: '#add_item'
-});
-```
-
-This creates rows with a default structure and allows adding/removing rows.
-
----
-
-## 3. Required Structural Rules
-
-To function correctly, these rules **must** be followed.
-
-### Row Selector Contract
-
-If:
-```js
-rowSelector: 'rowserial'
-```
-
-Each row **must** be:
-```html
-<div id="rowserial_0" class="rowserial"></div>
-```
-
-✔ `id` format: `rowSelector_index`  
-✔ `class` must contain `rowSelector`
-
----
-
-### Remove Button Contract
-
-Each remove button **must contain** either:
+### Basic Setup
 
 ```html
-data-index="0"
-```
-or
-```html
-data-id="0"
-```
+<!-- Required CSS (Bootstrap) -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-Example:
-```html
-<button type="button" class="serial_remove" data-index="0">×</button>
-```
+<!-- Required JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-This allows the plugin to correctly locate the row.
+<!-- Optional: BootstrapValidator -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-validator@0.11.9/dist/js/bootstrapValidator.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-validator@0.11.9/dist/css/bootstrapValidator.min.css" rel="stylesheet">
 
----
+<!-- Optional: SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-## 4. Options Reference (Core)
-
-| Option | Type | Description |
-|------|------|------------|
-| addBtn | string | Selector for add button |
-| maxRows | number | Maximum allowed rows |
-| startRow | number | Starting index |
-| fieldName | string | Base name for inputs |
-| rowSelector | string | Row class + ID prefix |
-| removeClass | string | Remove button class |
-| rowTemplate | function | Custom row generator |
-| onAdd | function | Callback before add |
-| onRemove | function | Callback before remove |
-| reindexRowName | array | Attributes to reindex names |
-| reindexRowID | array | Attributes to reindex IDs |
-| reindexRowIndex | array | Attributes to reindex numeric index |
-
----
-
-## 5. onAdd Callback
-
-### Signature
-```js
-onAdd(index, event, $row, fieldName)
+<!-- Plugin -->
+<script src="addRemRow.js"></script>
 ```
 
-### Behavior
-- Runs **after row creation**
-- Return `false` to block add
-- Useful for:
-  - Custom initialization
-  - Conditional row creation
+## Configuration Options
 
-Example:
-```js
-onAdd: (i, e, $row) => {
-  console.log('Row added:', i);
-}
-```
+### Basic Options
 
----
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `addBtn` | string | `''` | jQuery selector for the "Add Row" button |
+| `maxRows` | number | `5` | Maximum number of rows allowed |
+| `startRow` | number | `0` | Starting index for rows |
+| `fieldName` | string | `'data'` | Base field name for form inputs |
+| `rowSelector` | string | `'rowserial'` | CSS class for row container |
+| `removeClass` | string | `'serial_remove'` | CSS class for remove buttons |
+| `nestedwrapper` | string | `null` | Selector for nested wrapper elements |
+| `rowTemplate` | function | `null` | Function that returns HTML for new rows |
+| `onAdd` | function | `null` | Callback triggered when adding a row |
+| `onRemove` | function | `null` | Callback triggered before removing a row |
 
-## 6. onRemove Callback (Core)
+### Reindexing Options
 
-### Signature
-```js
-onRemove(index, event, $row, fieldName)
-```
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `reindexRowName` | array | `['name', 'data-bv-field', 'data-bv-for']` | Attributes containing field names to reindex |
+| `reindexRowID` | array | `['id', 'for', 'aria-describedby']` | Attributes containing IDs to reindex |
+| `reindexRowIndex` | array | `['data-index', 'data-id']` | Attributes containing index references |
 
-### Sync Usage
-```js
-onRemove: () => {
-  return confirm('Remove this row?');
-}
-```
+### Validation Options
 
-### Async Usage
-```js
-onRemove: async () => {
-  const ok = await myAsyncCheck();
-  return ok;
-}
-```
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `validator.form` | string | - | jQuery selector for the form element |
+| `validator.fields` | object | - | BootstrapValidator field configurations |
 
-### Rules
-| Return | Result |
-|------|-------|
-| false | Block removal |
-| true | Allow removal |
-| Promise<false> | Block |
-| Promise<true> | Allow |
+### SweetAlert2 Options
 
-`onRemove` always runs **before DOM removal**.
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `swal.options` | object | See code | SweetAlert2 configuration options |
+| `swal.ajax.url` | string | `null` | AJAX endpoint for delete operations |
+| `swal.ajax.method` | string | `'DELETE'` | HTTP method for delete |
+| `swal.ajax.dbPrimaryKeyId` | string | `'id'` | Database primary key field name |
 
----
+## Usage Examples
 
-## 7. Reindexing System (Core Feature)
+### Basic Implementation
 
-Reindexing occurs **after any row removal**.
-
-### 7.1 reindexRowIDPattern
-
-Targets attributes ending with `_number`.
-
-Example:
-```html
-id="email_3" → id="email_1"
-```
-
-Ensures unique DOM IDs.
-
----
-
-### 7.2 reindexRowNamePattern
-
-Targets attributes containing:
-```
-fieldName[index]
-```
-
-Example:
-```html
-name="items[3][name]" → items[1][name]
-```
-
-Works with:
-- name
-- data-bv-field
-- data-bv-for
-
----
-
-### 7.3 reindexRowIndexPattern
-
-Targets numeric-only attributes.
-
-Example:
-```html
-data-index="3" → data-index="1"
-```
-
-Used for buttons and UI logic.
-
----
-
-## 8. Examples
-
-### Example 1 – Minimal
-
-```js
-$('#wrap').remAddRow({
-  addBtn: '#add'
-});
-```
-
----
-
-### Example 2 – Full Core Usage
-
-```js
-$('#wrap').remAddRow({
-  addBtn: '#add',
+```javascript
+$('#rowWrapper').addRemRow({
+  addBtn: '#addRowBtn',
   maxRows: 10,
-  fieldName: 'products',
-  rowSelector: 'product',
-  removeClass: 'product_remove',
-  rowTemplate: (i, name) => `
-    <div id="product_${i}" class="product">
-      <input name="${name}[${i}][title]">
-      <button class="product_remove" data-index="${i}">×</button>
-    </div>
-  `
+  fieldName: 'skills',
+  rowSelector: 'skill-row',
+  removeClass: 'btn-remove'
 });
 ```
 
----
+### With Custom Template
 
-### Example 3 – Complex Nested Usage
+```javascript
+$('#rowWrapper').addRemRow({
+  addBtn: '#addRowBtn',
+  maxRows: 5,
+  fieldName: 'employees',
+  rowTemplate: function(index, fieldName) {
+    return `
+      <div id="employee_${index}" class="employee-row">
+        <input type="hidden" name="${fieldName}[${index}][id]">
 
-```js
-$('.order').each(function () {
-  $(this).find('.items').remAddRow({
-    addBtn: $(this).find('.add_item'),
-    fieldName: 'orders',
-    rowSelector: 'item'
-  });
+        <div class="row">
+          <div class="col-md-4">
+            <input type="text"
+                   name="${fieldName}[${index}][name]"
+                   class="form-control"
+                   placeholder="Name">
+          </div>
+          <div class="col-md-4">
+            <input type="email"
+                   name="${fieldName}[${index}][email]"
+                   class="form-control"
+                   placeholder="Email">
+          </div>
+          <div class="col-md-4">
+            <button type="button"
+                    class="btn btn-danger btn-remove"
+                    data-index="${index}">Remove</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
 });
 ```
 
-Each instance is isolated and safely indexed.
+### With BootstrapValidator
 
----
-
-## 9. BootstrapValidator Integration (No AJAX)
-
-The plugin:
-- Adds fields on row add
-- Removes fields on row removal
-
-Example:
-```js
-validator: {
-  form: '#myForm',
-  fields: {
-    '[name]': {
-      validators: { notEmpty: {} }
+```javascript
+$('#rowWrapper').addRemRow({
+  addBtn: '#addRowBtn',
+  maxRows: 3,
+  fieldName: 'contacts',
+  validator: {
+    form: '#myForm',
+    fields: {
+      '[name]': {
+        validators: {
+          notEmpty: { message: 'Name is required' }
+        }
+      },
+      '[email]': {
+        validators: {
+          notEmpty: { message: 'Email is required' },
+          emailAddress: { message: 'Invalid email format' }
+        }
+      }
     }
   }
+});
+```
+
+### With SweetAlert2 Delete Confirmation
+
+```javascript
+$('#rowWrapper').addRemRow({
+  addBtn: '#addRowBtn',
+  fieldName: 'products',
+  swal: {
+    options: {
+      title: 'Delete Product',
+      text: 'This will permanently delete the product!',
+      icon: 'warning',
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel'
+    },
+    ajax: {
+      url: '/api/products',
+      method: 'DELETE',
+      dbPrimaryKeyId: 'product_id'
+    }
+  }
+});
+```
+
+### With Nested Wrappers
+
+```javascript
+$('#rowWrapper').addRemRow({
+  addBtn: '#addRowBtn',
+  fieldName: 'categories',
+  nestedwrapper: '.nested-fields',
+  rowTemplate: function(index, fieldName) {
+    return `
+      <div id="category_${index}" class="category-row">
+        <input type="text"
+               name="${fieldName}[${index}][name]"
+               placeholder="Category Name">
+
+        <div class="nested-fields" id="nested_${index}">
+          <!-- Nested fields with their own reindexing -->
+          <input type="text"
+                 name="${fieldName}[${index}][sub][0][name]"
+                 data-index="${index}_0">
+          <input type="text"
+                 name="${fieldName}[${index}][sub][1][name]"
+                 data-index="${index}_1">
+        </div>
+
+        <button class="btn-remove" data-index="${index}">Remove</button>
+      </div>
+    `;
+  }
+});
+```
+
+## Public API Methods
+
+### Basic Operations
+
+```javascript
+// Initialize plugin
+const plugin = $('#wrapper').addRemRow(options);
+
+// Add a row
+plugin.add();
+
+// Remove a specific row
+plugin.remove(2);
+
+// Get current row count
+const count = plugin.getCount();
+
+// Reset all rows
+plugin.reset();
+
+// Destroy plugin
+plugin.destroy();
+
+// Reindex all rows
+plugin.reindexAll();
+```
+
+### Data Management
+
+```javascript
+// Get specific row element
+const $row = plugin.getRow(0);
+
+// Get all rows
+const $allRows = plugin.getAllRows();
+
+// Get data from specific row
+const rowData = plugin.getRowData(0);
+
+// Get data from all rows
+const allData = plugin.getAllData();
+
+// Set data for specific row
+plugin.setRowData(0, { name: 'John', email: 'john@example.com' });
+
+// Set data for all rows
+plugin.setAllData([
+  { name: 'John', email: 'john@example.com' },
+  { name: 'Jane', email: 'jane@example.com' }
+]);
+```
+
+### State Management
+
+```javascript
+// Check if max rows reached
+if (plugin.isMaxRowsReached()) {
+  console.log('Cannot add more rows');
+}
+
+// Disable/enable add button
+plugin.disableAdd();
+plugin.enableAdd();
+
+// Disable/enable remove buttons
+plugin.disableRemove();
+plugin.enableRemove();
+
+// Update options dynamically
+plugin.updateOptions({
+  maxRows: 8,
+  startRow: 1
+});
+
+// Get current configuration
+const config = plugin.getConfig();
+```
+
+### Validation
+
+```javascript
+// Validate specific row
+const isValid = plugin.validateRow(0);
+
+// Validate all rows
+const allValid = plugin.validateAll();
+```
+
+### Advanced Operations
+
+```javascript
+// Filter rows
+plugin.filterRows(function(rowData, index, $row) {
+  return rowData.status === 'active';
+});
+
+// Sort rows
+plugin.sortRows(function(a, b) {
+  return a.name.localeCompare(b.name);
+});
+```
+
+## Event Callbacks
+
+### onAdd Callback
+
+```javascript
+$('#wrapper').addRemRow({
+  // ... other options ...
+  onAdd: function(index, event, $row, fieldName) {
+    console.log('Row added:', index);
+    console.log('Field name prefix:', fieldName);
+
+    // Access the row's input
+    const $input = $row.find('input[name$="[name]"]');
+
+    // Set focus
+    $input.focus();
+
+    // Return false to prevent row addition
+    // return false;
+  }
+});
+```
+
+### onRemove Callback
+
+```javascript
+$('#wrapper').addRemRow({
+  // ... other options ...
+  onRemove: function(index, event, $row, fieldName) {
+    console.log('Removing row:', index);
+
+    // Custom confirmation
+    if (!confirm('Are you sure?')) {
+      return false; // Prevent removal
+    }
+
+    // Async operation example
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        console.log('Async cleanup complete');
+        resolve();
+      }, 1000);
+    });
+  }
+});
+```
+
+## Advanced Examples
+
+### Dynamic Row Template with Select2
+
+```javascript
+$('#wrapper').addRemRow({
+  addBtn: '#addRowBtn',
+  fieldName: 'products',
+  rowTemplate: function(index, fieldName) {
+    return `
+      <div id="product_${index}" class="row product-row">
+        <div class="col-md-5">
+          <select name="${fieldName}[${index}][category]"
+                  class="form-control select2"
+                  data-index="${index}">
+            <option value="">Select Category</option>
+            <option value="1">Electronics</option>
+            <option value="2">Clothing</option>
+          </select>
+        </div>
+        <div class="col-md-5">
+          <input type="text"
+                 name="${fieldName}[${index}][name]"
+                 class="form-control"
+                 placeholder="Product Name">
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-danger btn-remove"
+                  data-index="${index}">×</button>
+        </div>
+      </div>
+    `;
+  },
+  onAdd: function(index, event, $row) {
+    // Initialize Select2 for the new row
+    $row.find('.select2').select2();
+  }
+});
+```
+
+### Integration with External APIs
+
+```javascript
+$('#wrapper').addRemRow({
+  addBtn: '#addRowBtn',
+  fieldName: 'invoices',
+  swal: {
+    ajax: {
+      url: '/api/invoices',
+      method: 'DELETE',
+      dataType: 'json',
+      data: function(dbId) {
+        return {
+          invoice_id: dbId,
+          _token: $('meta[name="csrf-token"]').attr('content')
+        };
+      }
+    }
+  },
+  onRemove: function(index, event, $row, fieldName) {
+    // Custom pre-delete logic
+    const invoiceNumber = $row.find('[name$="[invoice_number]"]').val();
+
+    if (invoiceNumber.startsWith('INV-')) {
+      // Perform additional cleanup
+      return cleanupInvoice(invoiceNumber);
+    }
+  }
+});
+
+async function cleanupInvoice(invoiceNumber) {
+  // Custom async cleanup
+  await fetch(`/api/invoices/${invoiceNumber}/cleanup`, {
+    method: 'POST'
+  });
 }
 ```
 
----
+## Best Practices
 
-## 10. AJAX / SweetAlert2 (Advanced)
+### 1. **Template Management**
+- Keep templates separate using template literals or external templates
+- Ensure all inputs have proper `name` attributes for serialization
 
-The plugin supports:
-- DB-backed rows
-- Frontend-only rows
-- Async confirmation + deletion
+### 2. **Validation**
+- Always initialize BootstrapValidator before addRemRow
+- Use consistent field naming patterns
+- Consider server-side validation as primary
 
-Rows without a DB ID are removed **without AJAX**.
+### 3. **Performance**
+- Limit `maxRows` to reasonable numbers
+- Use efficient selectors in templates
+- Debounce rapid add/remove operations if needed
 
----
+### 4. **Accessibility**
+- Include proper labels for all inputs
+- Maintain ARIA attributes during reindexing
+- Ensure keyboard navigation works
 
-## 11. Stability Notes
+### 5. **Error Handling**
+- Handle AJAX errors gracefully
+- Provide user feedback for failed operations
+- Validate data before submission
 
-- No global state
-- Async-safe
-- Fully reentrant
-- Designed for large dynamic forms
+## Troubleshooting
 
----
+### Common Issues
+
+1. **Rows not adding:**
+   - Check if `maxRows` limit is reached
+   - Verify `addBtn` selector is correct
+   - Check browser console for errors
+
+2. **Reindexing not working:**
+   - Ensure `rowSelector` class is on row containers
+   - Verify attribute names in reindex arrays
+   - Check for JavaScript errors
+
+3. **Validation not triggering:**
+   - Confirm BootstrapValidator is loaded
+   - Check field name patterns match validator config
+   - Verify form selector is correct
+
+4. **SweetAlert2 not showing:**
+   - Ensure SweetAlert2 is loaded
+   - Check `swal.ajax.url` is set for database deletions
+   - Verify no conflicting SweetAlert2 initializations
+
+### Debugging Tips
+
+```javascript
+// Enable debug logging
+$('#wrapper').addRemRow({
+  // ... options ...
+  onAdd: function(index, event, $row) {
+    console.log('Add event:', { index, row: $row });
+  },
+  onRemove: function(index, event, $row) {
+    console.log('Remove event:', { index, row: $row });
+  }
+});
+
+// Check plugin state
+console.log('Row count:', plugin.getCount());
+console.log('Config:', plugin.getConfig());
+```
+
+## Browser Support
+
+- Chrome 50+
+- Firefox 45+
+- Safari 10+
+- Edge 15+
+- IE 11 (with polyfills)
 
 ## License
 
-MIT
+MIT License - Feel free to use in commercial and personal projects.
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit changes
+4. Push to the branch
+5. Create a Pull Request
+
+## Support
+
+For issues and feature requests, please use the GitHub issue tracker.
+```
+
+## Additional Notes
+
+The extended plugin now includes comprehensive methods for:
+
+1. **Data Management** - Get/set row data, retrieve all data
+2. **State Control** - Enable/disable buttons, check limits
+3. **Dynamic Configuration** - Update options on the fly
+4. **Validation Integration** - Trigger validation programmatically
+5. **Advanced Operations** - Filter and sort rows
+6. **Utility Methods** - Get configuration, access rows
