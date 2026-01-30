@@ -1,0 +1,29 @@
+{
+  "name": "addRemoveRowValidator6SweetAlert2Ajax",
+  "version": "1.0.0",
+  "description": "A powerful, feature-rich jQuery plugin for dynamically adding and removing form rows with support for validation, SweetAlert2 confirmations, nested fields, and comprehensive reindexing.",
+  "keywords": [
+    "add",
+    "remove",
+    "BooststrapValidator",
+    "SweetAlert2",
+    "ajax",
+    "row",
+    "dynamically",
+    "jquery",
+    "multiple",
+    "input",
+    "dynamic",
+    "plugin"
+  ],
+  "license": "ISC",
+  "author": "kroos",
+  "type": "commonjs",
+  "main": "addRemoveRowValidator6SweetAlert2Ajax.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "jquery": "^3.6.0"
+  }
+}
