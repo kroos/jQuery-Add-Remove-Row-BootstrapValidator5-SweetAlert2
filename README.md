@@ -20,11 +20,11 @@ A powerful, feature-rich jQuery plugin for dynamically adding and removing form 
 ### Dependencies
 
 Required:
-- **jQuery** (1.7+)
-- **Bootstrap 4/5** (for styling, optional for functionality)
-- **BootstrapValidator** (for validation, optional)
+- **jQuery 3.6+**
 
 Optional:
+- **Bootstrap 4/5** (for styling, optional for functionality)
+- **BootstrapValidator** (for validation, optional)
 - **SweetAlert2** (for delete confirmations)
 - **Font Awesome** (for icons)
 
@@ -38,16 +38,44 @@ Optional:
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- Optional: BootstrapValidator -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap-validator@0.11.9/dist/js/bootstrapValidator.min.js"></script>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-validator@0.11.9/dist/css/bootstrapValidator.min.css" rel="stylesheet">
-
 <!-- Optional: SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <!-- Plugin -->
-<script src="addRemRow.js"></script>
+<script src="addRemRowValidator5Swal2Ajax.js"></script>
 ```
+
+### NPM Installation
+- ensure jQuery is loaded.
+
+```npm
+
+npm install addremrow-validator5-swal2-ajax
+npm install bootstrapValidator5
+npm install sweetalert2
+
+```
+
+then in app.js
+a) webpack / laravel-mix
+```
+require('addremrow-validator5-swal2-ajax');
+
+require('bootstrapValidator5');
+
+window.swal = require ('sweetalert2');
+````
+
+b) Vite
+```
+import  'addremrow-validator5-swal2-ajax';
+
+import Swal from 'sweetalert2';
+window.Swal = Swal;
+
+import  'bootstrapValidator5';
+```
+
 
 ## Configuration Options
 
